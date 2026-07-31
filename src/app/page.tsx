@@ -144,7 +144,7 @@ export default function MasterDashboard() {
           Prepared by Tell No Lies {new Date().getFullYear()}
         </p>
         <p className="text-[10px] text-gray-600 mt-1 bg-amber-50 border border-amber-200 inline-block rounded px-3 py-1">
-          All data shown is placeholder — awaiting live data connections
+          All data shown is placeholder — awaiting live data connections (Supabase ready)
         </p>
       </div>
     </div>

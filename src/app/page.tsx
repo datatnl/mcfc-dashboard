@@ -1,65 +1,152 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import DateRangePicker from "@/components/DateRangePicker";
+import SectionHeader from "@/components/SectionHeader";
+import KpiCard from "@/components/KpiCard";
+import TrendChart from "@/components/TrendChart";
+import LeadsChannelChart from "@/components/LeadsChannelChart";
+import LeadsEventTable from "@/components/LeadsEventTable";
+import FunnelChart from "@/components/FunnelChart";
+import {
+  behaviourKpis,
+  leadsKpis,
+  dailyTrend,
+  leadsByChannel,
+  leadsEvents,
+  funnelData,
+} from "@/lib/dummy-data";
+
+export default function MasterDashboard() {
+  const [comparison, setComparison] = useState("pop");
+  const [startDate, setStartDate] = useState("2026-06-29");
+  const [endDate, setEndDate] = useState("2026-07-28");
+  const [funnelFilter, setFunnelFilter] = useState("all");
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="p-6 pb-12">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-[#2dd4a8] flex items-center justify-center text-white font-bold text-lg">
+            MCFC
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">MASTER DASHBOARD</h1>
+            <p className="text-sm text-gray-400">
+              melbournecityfc.com.au — all revenue streams combined
+            </p>
+          </div>
+        </div>
+        <DateRangePicker
+          comparison={comparison}
+          onComparisonChange={setComparison}
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+      </div>
+
+      {/* BEHAVIOUR Section */}
+      <section className="bg-white rounded-xl p-6 mb-6">
+        <SectionHeader
+          title="BEHAVIOUR"
+          subtitle="Top-line performance vs target, last week and last year"
+        />
+
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+          {behaviourKpis.map((metric) => (
+            <KpiCard key={metric.label} metric={metric} comparison={comparison} />
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="mt-2">
+          <h3 className="text-sm font-semibold text-gray-700 mb-1">
+            Sessions, Leads &amp; Conversions — daily trend
+          </h3>
+          <TrendChart data={dailyTrend} />
         </div>
-      </main>
+      </section>
+
+      {/* LEADS Section */}
+      <section className="bg-white rounded-xl p-6 mb-6">
+        <SectionHeader
+          title="LEADS"
+          subtitle="Lead volume, source and cost — where demand is coming from"
+        />
+
+        <div className="grid grid-cols-12 gap-4 mb-6">
+          <div className="col-span-12 lg:col-span-5">
+            <div className="grid grid-cols-3 gap-3">
+              {leadsKpis.map((metric) => (
+                <KpiCard key={metric.label} metric={metric} comparison={comparison} />
+              ))}
+            </div>
+          </div>
+          <div className="col-span-12 lg:col-span-7">
+            <div className="bg-gray-50 rounded-lg p-4 h-full">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                Leads by Channel (A/T/V)
+              </h4>
+              <p className="text-[10px] text-gray-400 mb-3">Meta / Google / Email / Organic / Direct</p>
+              <div className="h-[180px]">
+                <LeadsChannelChart data={leadsByChannel} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Leads by Lead Event</h3>
+          <LeadsEventTable events={leadsEvents} />
+        </div>
+      </section>
+
+      {/* JOURNEYS Section */}
+      <section className="bg-white rounded-xl p-6 mb-6">
+        <SectionHeader
+          title="JOURNEYS"
+          subtitle="Sessions to leads to conversions, top paths and drop-offs (by CFS location)"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+              Filter by Revenue Stream
+            </span>
+            <select
+              value={funnelFilter}
+              onChange={(e) => setFunnelFilter(e.target.value)}
+              className="bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-700 min-w-[180px] appearance-none cursor-pointer"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 10px center",
+              }}
+            >
+              <option value="all">All Revenue Streams</option>
+              <option value="cfs">CFS</option>
+              <option value="membership">Membership</option>
+              <option value="ticketing">Ticketing</option>
+              <option value="merchandise">Merchandise</option>
+            </select>
+          </div>
+        </SectionHeader>
+
+        <FunnelChart steps={funnelData} />
+      </section>
+
+      {/* Footer */}
+      <div className="text-center py-4">
+        <div className="inline-flex items-center gap-2 mb-2">
+          <div className="w-6 h-6 rounded bg-[#2dd4a8]" />
+        </div>
+        <p className="text-xs text-gray-500">
+          Prepared by Tell No Lies {new Date().getFullYear()}
+        </p>
+        <p className="text-[10px] text-gray-600 mt-1 bg-amber-50 border border-amber-200 inline-block rounded px-3 py-1">
+          All data shown is placeholder — awaiting live data connections
+        </p>
+      </div>
     </div>
   );
 }

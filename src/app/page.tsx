@@ -8,7 +8,7 @@ import TrendChart from "@/components/TrendChart";
 import LeadsChannelChart from "@/components/LeadsChannelChart";
 import LeadsEventTable from "@/components/LeadsEventTable";
 import FunnelChart from "@/components/FunnelChart";
-import { fetchDashboardData, pctChange } from "@/lib/queries";
+import { fetchDashboardData, fetchStreamSessions, pctChange } from "@/lib/queries";
 import type { KpiMetric, DailyPoint, FunnelStep, LeadEvent } from "@/lib/live-data";
 
 const CHANNEL_COLORS: Record<string, string> = {
@@ -146,6 +146,18 @@ export default function MasterDashboard() {
     loadData();
   }, [loadData]);
 
+  const [funnelSessions, setFunnelSessions] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (funnelFilter === "all") {
+      setFunnelSessions(null);
+    } else {
+      fetchStreamSessions(startDate, endDate, comparison, funnelFilter).then((r) => {
+        setFunnelSessions(r?.sessions ?? null);
+      });
+    }
+  }, [funnelFilter, startDate, endDate, comparison]);
+
   const matchesFilter = (stream: string) => {
     if (funnelFilter === "all") return true;
     const allowed = FILTER_TO_STREAMS[funnelFilter] ?? [];
@@ -153,6 +165,7 @@ export default function MasterDashboard() {
   };
 
   const funnelData: FunnelStep[] = useMemo(() => {
+    const sessions = funnelFilter === "all" ? totalSessions : (funnelSessions ?? totalSessions);
     const filteredLeads = rawLeadEvents
       .filter((e) => matchesFilter(e.revenue_stream))
       .reduce((s, e) => s + e.event_count, 0);
@@ -160,12 +173,12 @@ export default function MasterDashboard() {
       .filter((e) => matchesFilter(e.revenue_stream))
       .reduce((s, e) => s + e.event_count, 0);
     return [
-      { label: "Total Sessions", value: totalSessions, abandonments: totalSessions - filteredLeads },
+      { label: "Total Sessions", value: sessions, abandonments: sessions - filteredLeads },
       { label: "Leads", value: filteredLeads, abandonments: filteredLeads - filteredConversions },
       { label: "Conversions", value: filteredConversions },
     ];
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [funnelFilter, rawLeadEvents, rawConvEvents, totalSessions]);
+  }, [funnelFilter, funnelSessions, rawLeadEvents, rawConvEvents, totalSessions]);
 
   return (
     <div className="p-6 pb-12">

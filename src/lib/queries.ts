@@ -5,14 +5,27 @@ interface GA4Totals {
   previous: { sessions: number; newSessions: number; returningSessions: number; purchases: number; revenue: number };
 }
 
-async function fetchGA4Totals(startDate: string, endDate: string, comparison: string): Promise<GA4Totals | null> {
+async function fetchGA4Totals(startDate: string, endDate: string, comparison: string, stream?: string): Promise<GA4Totals | null> {
   try {
-    const res = await fetch(`/api/ga4-totals?startDate=${startDate}&endDate=${endDate}&comparison=${comparison}`);
+    let url = `/api/ga4-totals?startDate=${startDate}&endDate=${endDate}&comparison=${comparison}`;
+    if (stream) url += `&stream=${stream}`;
+    const res = await fetch(url);
     if (!res.ok) return null;
     return res.json();
   } catch {
     return null;
   }
+}
+
+export async function fetchStreamSessions(
+  startDate: string,
+  endDate: string,
+  comparison: string,
+  stream: string
+): Promise<{ sessions: number; prevSessions: number } | null> {
+  const totals = await fetchGA4Totals(startDate, endDate, comparison, stream);
+  if (!totals) return null;
+  return { sessions: totals.current.sessions, prevSessions: totals.previous.sessions };
 }
 
 export interface DashboardData {

@@ -3,6 +3,13 @@ import { NextRequest } from "next/server";
 
 const GA4_PROPERTY = "properties/396933874";
 
+const STREAM_HOSTNAMES: Record<string, string[]> = {
+  cfs: ["play.melbournecityfc.com.au", "portal.iclasspro.com"],
+  membership: ["account.melbournecityfc.com.au", "premier.sportsubs.com.au"],
+  ticketing: ["melbournecityfc.com.au", "www.melbournecityfc.com.au"],
+  merchandise: ["store.melbournecityfc.com.au", "shop.melbournecityfc.com.au"],
+};
+
 function getClient() {
   const b64 = process.env.GA4_SERVICE_ACCOUNT_KEY;
   if (!b64) throw new Error("GA4_SERVICE_ACCOUNT_KEY not set");
@@ -33,23 +40,44 @@ function previousRange(start: string, end: string, comparison: string): [string,
   return [prevStart.toISOString().slice(0, 10), prevEnd.toISOString().slice(0, 10)];
 }
 
-async function queryTotals(client: BetaAnalyticsDataClient, startDate: string, endDate: string) {
+function hostnameFilter(hostnames: string[]) {
+  return {
+    filter: {
+      fieldName: "hostName",
+      inListFilter: { values: hostnames },
+    },
+  };
+}
+
+async function queryTotals(
+  client: BetaAnalyticsDataClient,
+  startDate: string,
+  endDate: string,
+  stream?: string
+) {
+  const dimFilter = stream && STREAM_HOSTNAMES[stream]
+    ? hostnameFilter(STREAM_HOSTNAMES[stream])
+    : undefined;
+
   const [sessionsRes, nvrRes, revenueRes] = await Promise.all([
     client.runReport({
       property: GA4_PROPERTY,
       metrics: [{ name: "sessions" }],
       dateRanges: [{ startDate, endDate }],
+      dimensionFilter: dimFilter,
     }),
     client.runReport({
       property: GA4_PROPERTY,
       dimensions: [{ name: "newVsReturning" }],
       metrics: [{ name: "sessions" }],
       dateRanges: [{ startDate, endDate }],
+      dimensionFilter: dimFilter,
     }),
     client.runReport({
       property: GA4_PROPERTY,
       metrics: [{ name: "ecommercePurchases" }, { name: "totalRevenue" }],
       dateRanges: [{ startDate, endDate }],
+      dimensionFilter: dimFilter,
     }),
   ]);
 
@@ -73,6 +101,7 @@ export async function GET(request: NextRequest) {
   const startDate = request.nextUrl.searchParams.get("startDate");
   const endDate = request.nextUrl.searchParams.get("endDate");
   const comparison = request.nextUrl.searchParams.get("comparison") ?? "pop";
+  const stream = request.nextUrl.searchParams.get("stream") ?? undefined;
 
   if (!startDate || !endDate) {
     return Response.json({ error: "startDate and endDate required" }, { status: 400 });
@@ -83,8 +112,8 @@ export async function GET(request: NextRequest) {
     const [prevStart, prevEnd] = previousRange(startDate, endDate, comparison);
 
     const [current, previous] = await Promise.all([
-      queryTotals(client, startDate, endDate),
-      queryTotals(client, prevStart, prevEnd),
+      queryTotals(client, startDate, endDate, stream),
+      queryTotals(client, prevStart, prevEnd, stream),
     ]);
 
     return Response.json({ current, previous });

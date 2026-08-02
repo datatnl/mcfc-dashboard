@@ -147,13 +147,17 @@ export default function MasterDashboard() {
   }, [loadData]);
 
   const [funnelSessions, setFunnelSessions] = useState<number | null>(null);
+  const [funnelLoading, setFunnelLoading] = useState(false);
 
   useEffect(() => {
     if (funnelFilter === "all") {
       setFunnelSessions(null);
+      setFunnelLoading(false);
     } else {
+      setFunnelLoading(true);
       fetchStreamSessions(startDate, endDate, comparison, funnelFilter).then((r) => {
         setFunnelSessions(r?.sessions ?? null);
+        setFunnelLoading(false);
       });
     }
   }, [funnelFilter, startDate, endDate, comparison]);
@@ -297,7 +301,7 @@ export default function MasterDashboard() {
           </div>
         </SectionHeader>
 
-        <FunnelChart steps={funnelData} />
+        <FunnelChart steps={funnelData} loading={funnelLoading} />
       </section>
 
       </>}

@@ -5,6 +5,7 @@ import type { FunnelStep } from "@/lib/live-data";
 
 interface FunnelChartProps {
   steps: FunnelStep[];
+  loading?: boolean;
 }
 
 function formatNumber(n: number): string {
@@ -110,12 +111,12 @@ function FunnelArea({ steps, height }: { steps: FunnelStep[]; height: number }) 
   );
 }
 
-export default function FunnelChart({ steps }: FunnelChartProps) {
+export default function FunnelChart({ steps, loading }: FunnelChartProps) {
   const maxValue = steps[0].value;
   const overallRate = ((steps[steps.length - 1].value / maxValue) * 100).toFixed(1);
 
   return (
-    <div>
+    <div className="relative">
       {/* Summary bar */}
       <div className="flex items-center gap-8 mb-5 px-1">
         <div>
@@ -146,6 +147,19 @@ export default function FunnelChart({ steps }: FunnelChartProps) {
           </div>
         ))}
       </div>
+
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center rounded-lg backdrop-blur-[1px]">
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Loading sessions...
+          </div>
+        </div>
+      )}
 
       {/* Funnel area — full-width columns, height = proportion of total, filled from bottom */}
       <FunnelArea steps={steps} height={200} />

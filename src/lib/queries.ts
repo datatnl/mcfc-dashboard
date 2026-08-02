@@ -1,5 +1,20 @@
 import { supabase } from "./supabase";
 
+interface GA4Totals {
+  current: { sessions: number; newSessions: number; returningSessions: number; purchases: number; revenue: number };
+  previous: { sessions: number; newSessions: number; returningSessions: number; purchases: number; revenue: number };
+}
+
+async function fetchGA4Totals(startDate: string, endDate: string): Promise<GA4Totals | null> {
+  try {
+    const res = await fetch(`/api/ga4-totals?startDate=${startDate}&endDate=${endDate}`);
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 export interface DashboardData {
   sessions: number;
   newSessions: number;
@@ -14,10 +29,12 @@ export interface DashboardData {
   prevConversions: number;
   prevLeads: number;
   prevRevenue: number;
+  prevPurchases: number;
   dailySessions: { date: string; sessions: number; new_sessions: number; returning_sessions: number }[];
   dailyLeads: Record<string, number>;
   dailyConversions: Record<string, number>;
   dailyRevenue: Record<string, number>;
+  dailyPurchases: Record<string, number>;
   channelSessions: { channel: string; sessions: number }[];
   leadEvents: {
     dashboard_label: string;
@@ -56,6 +73,7 @@ export async function fetchDashboardData(
     prevEventsRes,
     revenueRes,
     prevRevenueRes,
+    ga4Totals,
   ] = await Promise.all([
     supabase
       .from("daily_sessions")
@@ -94,17 +112,27 @@ export async function fetchDashboardData(
       .select("purchases,revenue")
       .gte("date", prevStart)
       .lte("date", prevEnd),
+    fetchGA4Totals(startDate, endDate),
   ]);
 
   const daily = sessionsRes.data ?? [];
-  const sessions = daily.reduce((s, r) => s + r.sessions, 0);
-  const newSessions = daily.reduce((s, r) => s + r.new_sessions, 0);
-  const returningSessions = daily.reduce((s, r) => s + r.returning_sessions, 0);
+  // Supabase sums as fallback
+  const sbSessions = daily.reduce((s, r) => s + r.sessions, 0);
+  const sbNewSessions = daily.reduce((s, r) => s + r.new_sessions, 0);
+  const sbReturningSessions = daily.reduce((s, r) => s + r.returning_sessions, 0);
 
   const prevDaily = prevSessionsRes.data ?? [];
-  const prevSessions = prevDaily.reduce((s, r) => s + r.sessions, 0);
-  const prevNewSessions = prevDaily.reduce((s, r) => s + r.new_sessions, 0);
-  const prevReturningSessions = prevDaily.reduce((s, r) => s + r.returning_sessions, 0);
+  const sbPrevSessions = prevDaily.reduce((s, r) => s + r.sessions, 0);
+  const sbPrevNewSessions = prevDaily.reduce((s, r) => s + r.new_sessions, 0);
+  const sbPrevReturningSessions = prevDaily.reduce((s, r) => s + r.returning_sessions, 0);
+
+  // Use live GA4 dimensionless totals for KPI cards (exact match to Data Studio)
+  const sessions = ga4Totals?.current.sessions ?? sbSessions;
+  const newSessions = ga4Totals?.current.newSessions ?? sbNewSessions;
+  const returningSessions = ga4Totals?.current.returningSessions ?? sbReturningSessions;
+  const prevSessions = ga4Totals?.previous.sessions ?? sbPrevSessions;
+  const prevNewSessions = ga4Totals?.previous.newSessions ?? sbPrevNewSessions;
+  const prevReturningSessions = ga4Totals?.previous.returningSessions ?? sbPrevReturningSessions;
 
   const events = eventsRes.data ?? [];
   const leads = events
@@ -123,11 +151,17 @@ export async function fetchDashboardData(
     .reduce((s, e) => s + e.event_count, 0);
 
   const revRows = revenueRes.data ?? [];
-  const revenue = revRows.reduce((s, r) => s + Number(r.revenue), 0);
-  const purchases = revRows.reduce((s, r) => s + r.purchases, 0);
+  const sbRevenue = revRows.reduce((s, r) => s + Number(r.revenue), 0);
+  const sbPurchases = revRows.reduce((s, r) => s + r.purchases, 0);
 
   const prevRevRows = prevRevenueRes.data ?? [];
-  const prevRevenue = prevRevRows.reduce((s, r) => s + Number(r.revenue), 0);
+  const sbPrevRevenue = prevRevRows.reduce((s, r) => s + Number(r.revenue), 0);
+  const sbPrevPurchases = prevRevRows.reduce((s, r) => s + r.purchases, 0);
+
+  const revenue = ga4Totals?.current.revenue ?? sbRevenue;
+  const purchases = ga4Totals?.current.purchases ?? sbPurchases;
+  const prevRevenue = ga4Totals?.previous.revenue ?? sbPrevRevenue;
+  const prevPurchases = ga4Totals?.previous.purchases ?? sbPrevPurchases;
 
   // Daily leads/conversions keyed by date
   const dailyLeads: Record<string, number> = {};
@@ -140,10 +174,12 @@ export async function fetchDashboardData(
     }
   }
 
-  // Daily revenue keyed by date
+  // Daily revenue and purchases keyed by date
   const dailyRevenue: Record<string, number> = {};
+  const dailyPurchases: Record<string, number> = {};
   for (const r of revRows) {
     dailyRevenue[r.date] = Number(r.revenue);
+    dailyPurchases[r.date] = r.purchases;
   }
 
   // Channel sessions aggregated
@@ -171,9 +207,9 @@ export async function fetchDashboardData(
     sessions, newSessions, returningSessions,
     conversions, leads, revenue, purchases,
     prevSessions, prevNewSessions, prevReturningSessions,
-    prevConversions, prevLeads, prevRevenue,
+    prevConversions, prevLeads, prevRevenue, prevPurchases,
     dailySessions: daily,
-    dailyLeads, dailyConversions, dailyRevenue,
+    dailyLeads, dailyConversions, dailyRevenue, dailyPurchases,
     channelSessions, leadEvents,
   };
 }

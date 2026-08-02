@@ -64,7 +64,7 @@ export default function MasterDashboard() {
       const sessionsSpark = d.dailySessions.map((r) => r.sessions);
       const newSpark = d.dailySessions.map((r) => r.new_sessions);
       const retSpark = d.dailySessions.map((r) => r.returning_sessions);
-      const convSpark = d.dailySessions.map((r) => d.dailyConversions[r.date] ?? 0);
+      const purchSpark = d.dailySessions.map((r) => d.dailyPurchases[r.date] ?? 0);
       const revSpark = d.dailySessions.map((r) => Math.round(d.dailyRevenue[r.date] ?? 0));
       const leadsSpark = d.dailySessions.map((r) => d.dailyLeads[r.date] ?? 0);
 
@@ -72,7 +72,7 @@ export default function MasterDashboard() {
         { label: "Total Web Sessions", value: fmt(d.sessions), change: pctChange(d.sessions, d.prevSessions), sparkline: sessionsSpark },
         { label: "First Visits", value: fmt(d.newSessions), change: pctChange(d.newSessions, d.prevNewSessions), sparkline: newSpark },
         { label: "Repeat Visits", value: fmt(d.returningSessions), change: pctChange(d.returningSessions, d.prevReturningSessions), sparkline: retSpark },
-        { label: "Total Conversions", value: fmt(d.conversions), change: pctChange(d.conversions, d.prevConversions), sparkline: convSpark },
+        { label: "Ecommerce Purchases", value: fmt(d.purchases), change: pctChange(d.purchases, d.prevPurchases), sparkline: purchSpark },
         { label: "Revenue", value: fmt(d.revenue, "$"), change: pctChange(d.revenue, d.prevRevenue), sparkline: revSpark },
         { label: "ROAS", value: "—", change: 0, sparkline: [], unavailable: true },
       ]);

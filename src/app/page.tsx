@@ -89,7 +89,7 @@ export default function MasterDashboard() {
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                 Sessions by Channel
               </h4>
-              <p className="text-[10px] text-gray-400 mb-3">Direct / Google / Meta / Organic / Other / Email</p>
+              <p className="text-[10px] text-gray-400 mb-3">GA4 sessionDefaultChannelGroup</p>
               <div className="h-[180px]">
                 <LeadsChannelChart data={leadsByChannel} />
               </div>

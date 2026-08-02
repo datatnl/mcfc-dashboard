@@ -31,7 +31,7 @@ export default function LeadsChannelChart({ data }: LeadsChannelChartProps) {
         data: data.map((d) => d.leads),
         backgroundColor: data.map((d) => d.color),
         borderRadius: 4,
-        barThickness: 36,
+        maxBarThickness: 36,
       },
     ],
   };
@@ -56,7 +56,7 @@ export default function LeadsChannelChart({ data }: LeadsChannelChartProps) {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { font: { size: 11 }, color: "#6b7280" },
+        ticks: { font: { size: 9 }, color: "#6b7280", maxRotation: 45, minRotation: 45 },
         border: { display: false },
       },
       y: {

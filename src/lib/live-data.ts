@@ -129,12 +129,21 @@ export const dailyTrend: DailyPoint[] = [
 ];
 
 export const leadsByChannel = [
-  { channel: "Direct", leads: 41716, color: "#F472B6" },
-  { channel: "Google", leads: 36945, color: "#3DD9A4" },
-  { channel: "Meta", leads: 27220, color: "#4F9CF7" },
-  { channel: "Organic", leads: 9746, color: "#A78BFA" },
-  { channel: "Other", leads: 5199, color: "#94A3B8" },
-  { channel: "Email", leads: 118, color: "#FF8C42" },
+  { channel: "Direct", leads: 41083, color: "#F472B6" },
+  { channel: "Organic Search", leads: 31881, color: "#3DD9A4" },
+  { channel: "Paid Social", leads: 27185, color: "#4F9CF7" },
+  { channel: "Organic Social", leads: 5230, color: "#A78BFA" },
+  { channel: "Referral", leads: 3667, color: "#FB923C" },
+  { channel: "Cross-network", leads: 2523, color: "#2dd4a8" },
+  { channel: "Unassigned", leads: 1940, color: "#94A3B8" },
+  { channel: "Paid Search", leads: 1366, color: "#818CF8" },
+  { channel: "AI Assistant", leads: 271, color: "#22D3EE" },
+  { channel: "Email", leads: 102, color: "#FF8C42" },
+  { channel: "Organic Shopping", leads: 44, color: "#86EFAC" },
+  { channel: "Paid Other", leads: 41, color: "#FDA4AF" },
+  { channel: "Paid Video", leads: 4, color: "#FCD34D" },
+  { channel: "Display", leads: 3, color: "#D8B4FE" },
+  { channel: "Paid Shopping", leads: 1, color: "#FDBA74" },
 ];
 
 export const leadsEvents: LeadEvent[] = [

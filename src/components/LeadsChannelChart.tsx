@@ -27,20 +27,25 @@ export default function LeadsChannelChart({ data }: LeadsChannelChartProps) {
     labels: data.map((d) => d.channel),
     datasets: [
       {
-        label: "Leads",
+        label: "Sessions",
         data: data.map((d) => d.leads),
-        backgroundColor: data.map((d) => d.color),
-        borderRadius: 4,
-        maxBarThickness: 36,
+        backgroundColor: "#9ca3af",
+        borderRadius: 3,
+        maxBarThickness: 18,
       },
     ],
   };
 
   const options = {
+    indexAxis: "y" as const,
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
+      legend: {
+        display: true,
+        position: "bottom" as const,
+        labels: { font: { size: 10 }, color: "#6b7280", boxWidth: 12, padding: 16 },
+      },
       tooltip: {
         backgroundColor: "#1f2937",
         titleFont: { size: 12 },
@@ -48,26 +53,27 @@ export default function LeadsChannelChart({ data }: LeadsChannelChartProps) {
         cornerRadius: 6,
         padding: 10,
         callbacks: {
-          label: (ctx: { parsed: { y: number | null } }) =>
-            `${(ctx.parsed.y ?? 0).toLocaleString()} leads`,
+          label: (ctx: { parsed: { x: number | null } }) =>
+            `${(ctx.parsed.x ?? 0).toLocaleString()} sessions`,
         },
       },
     },
     scales: {
       x: {
-        grid: { display: false },
-        ticks: { font: { size: 9 }, color: "#6b7280", maxRotation: 45, minRotation: 45 },
-        border: { display: false },
-      },
-      y: {
         grid: { color: "#f3f4f6" },
         ticks: {
           font: { size: 10 },
           color: "#9ca3af",
           callback: (v: number | string) => {
-            return Number(v).toLocaleString();
+            const n = Number(v);
+            return n >= 1000 ? `${Math.round(n / 1000)}K` : String(n);
           },
         },
+        border: { display: false },
+      },
+      y: {
+        grid: { display: false },
+        ticks: { font: { size: 10 }, color: "#6b7280" },
         border: { display: false },
       },
     },

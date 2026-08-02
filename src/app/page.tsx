@@ -76,31 +76,32 @@ export default function MasterDashboard() {
           subtitle="Lead volume, source and cost — where demand is coming from"
         />
 
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {leadsKpis.map((metric) => (
+            <KpiCard key={metric.label} metric={metric} comparison={comparison} />
+          ))}
+        </div>
+
         <div className="grid grid-cols-12 gap-4 mb-6">
-          <div className="col-span-12 lg:col-span-5">
-            <div className="grid grid-cols-3 gap-3">
-              {leadsKpis.map((metric) => (
-                <KpiCard key={metric.label} metric={metric} comparison={comparison} />
-              ))}
-            </div>
-          </div>
           <div className="col-span-12 lg:col-span-7">
-            <div className="bg-gray-50 rounded-lg p-4 h-full">
+            <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                Sessions by Channel
+                Leads by channel
               </h4>
-              <p className="text-[10px] text-gray-400 mb-3">GA4 sessionDefaultChannelGroup</p>
-              <div className="h-[180px]">
+              <p className="text-[10px] text-gray-400 mb-2">Session default channel group</p>
+              <div className="h-[420px]">
                 <LeadsChannelChart data={leadsByChannel} />
               </div>
             </div>
           </div>
+          <div className="col-span-12 lg:col-span-5">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Leads by Lead Event</h3>
+              <LeadsEventTable events={leadsEvents} />
+            </div>
+          </div>
         </div>
 
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Leads by Lead Event</h3>
-          <LeadsEventTable events={leadsEvents} />
-        </div>
       </section>
 
       {/* JOURNEYS Section */}

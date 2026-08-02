@@ -15,9 +15,16 @@ function getClient() {
   });
 }
 
-function previousRange(start: string, end: string): [string, string] {
+function previousRange(start: string, end: string, comparison: string): [string, string] {
   const s = new Date(start);
   const e = new Date(end);
+  if (comparison === "yoy") {
+    const prevStart = new Date(s);
+    prevStart.setFullYear(prevStart.getFullYear() - 1);
+    const prevEnd = new Date(e);
+    prevEnd.setFullYear(prevEnd.getFullYear() - 1);
+    return [prevStart.toISOString().slice(0, 10), prevEnd.toISOString().slice(0, 10)];
+  }
   const days = Math.round((e.getTime() - s.getTime()) / 86400000);
   const prevEnd = new Date(s);
   prevEnd.setDate(prevEnd.getDate() - 1);
@@ -65,6 +72,7 @@ async function queryTotals(client: BetaAnalyticsDataClient, startDate: string, e
 export async function GET(request: NextRequest) {
   const startDate = request.nextUrl.searchParams.get("startDate");
   const endDate = request.nextUrl.searchParams.get("endDate");
+  const comparison = request.nextUrl.searchParams.get("comparison") ?? "pop";
 
   if (!startDate || !endDate) {
     return Response.json({ error: "startDate and endDate required" }, { status: 400 });
@@ -72,7 +80,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const client = getClient();
-    const [prevStart, prevEnd] = previousRange(startDate, endDate);
+    const [prevStart, prevEnd] = previousRange(startDate, endDate, comparison);
 
     const [current, previous] = await Promise.all([
       queryTotals(client, startDate, endDate),

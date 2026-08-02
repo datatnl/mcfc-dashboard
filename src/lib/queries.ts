@@ -5,9 +5,9 @@ interface GA4Totals {
   previous: { sessions: number; newSessions: number; returningSessions: number; purchases: number; revenue: number };
 }
 
-async function fetchGA4Totals(startDate: string, endDate: string): Promise<GA4Totals | null> {
+async function fetchGA4Totals(startDate: string, endDate: string, comparison: string): Promise<GA4Totals | null> {
   try {
-    const res = await fetch(`/api/ga4-totals?startDate=${startDate}&endDate=${endDate}`);
+    const res = await fetch(`/api/ga4-totals?startDate=${startDate}&endDate=${endDate}&comparison=${comparison}`);
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -48,9 +48,16 @@ function pctChange(current: number, previous: number): number {
   return Math.round(((current - previous) / previous) * 1000) / 10;
 }
 
-function previousRange(start: string, end: string): [string, string] {
+function previousRange(start: string, end: string, comparison: string): [string, string] {
   const s = new Date(start);
   const e = new Date(end);
+  if (comparison === "yoy") {
+    const prevStart = new Date(s);
+    prevStart.setFullYear(prevStart.getFullYear() - 1);
+    const prevEnd = new Date(e);
+    prevEnd.setFullYear(prevEnd.getFullYear() - 1);
+    return [prevStart.toISOString().slice(0, 10), prevEnd.toISOString().slice(0, 10)];
+  }
   const days = Math.round((e.getTime() - s.getTime()) / 86400000);
   const prevEnd = new Date(s);
   prevEnd.setDate(prevEnd.getDate() - 1);
@@ -61,9 +68,10 @@ function previousRange(start: string, end: string): [string, string] {
 
 export async function fetchDashboardData(
   startDate: string,
-  endDate: string
+  endDate: string,
+  comparison: string = "pop"
 ): Promise<DashboardData> {
-  const [prevStart, prevEnd] = previousRange(startDate, endDate);
+  const [prevStart, prevEnd] = previousRange(startDate, endDate, comparison);
 
   const [
     sessionsRes,
@@ -112,7 +120,7 @@ export async function fetchDashboardData(
       .select("purchases,revenue")
       .gte("date", prevStart)
       .lte("date", prevEnd),
-    fetchGA4Totals(startDate, endDate),
+    fetchGA4Totals(startDate, endDate, comparison),
   ]);
 
   const daily = sessionsRes.data ?? [];

@@ -59,7 +59,7 @@ export default function MasterDashboard() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const d = await fetchDashboardData(startDate, endDate);
+      const d = await fetchDashboardData(startDate, endDate, comparison);
 
       const sessionsSpark = d.dailySessions.map((r) => r.sessions);
       const newSpark = d.dailySessions.map((r) => r.new_sessions);
@@ -134,7 +134,7 @@ export default function MasterDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, comparison]);
 
   useEffect(() => {
     loadData();

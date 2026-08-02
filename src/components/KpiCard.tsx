@@ -11,7 +11,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import type { KpiMetric } from "@/lib/dummy-data";
+import type { KpiMetric } from "@/lib/live-data";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
@@ -293,10 +293,25 @@ export default function KpiCard({ metric, comparison = "pop" }: KpiCardProps) {
   const sparkColor = isPositive ? "#10b981" : "#ef4444";
 
   useEffect(() => {
-    if (canvasRef.current) {
+    if (canvasRef.current && !metric.unavailable) {
       drawSparkline(canvasRef.current, metric.sparkline, sparkColor);
     }
-  }, [metric.sparkline, sparkColor]);
+  }, [metric.sparkline, sparkColor, metric.unavailable]);
+
+  if (metric.unavailable) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-100 p-4 flex flex-col min-w-0 opacity-50">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <span className="text-[11px] text-gray-500 font-medium leading-tight">{metric.label}</span>
+        </div>
+        <span className="text-2xl font-bold text-gray-400 mb-2">—</span>
+        <span className="text-[10px] text-gray-400">Awaiting data source</span>
+        <div className="mt-auto h-10 flex items-center justify-center">
+          <span className="text-[9px] text-gray-300 border border-dashed border-gray-200 rounded px-2 py-1">No data</span>
+        </div>
+      </div>
+    );
+  }
 
   const rawValue = parseFloat(metric.value.replace(/[$,x%]/g, ""));
   const prevRaw = rawValue / (1 + metric.change / 100);

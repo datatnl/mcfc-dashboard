@@ -1,4 +1,4 @@
-import type { LeadEvent } from "@/lib/dummy-data";
+import type { LeadEvent } from "@/lib/live-data";
 
 interface LeadsEventTableProps {
   events: LeadEvent[];
@@ -47,9 +47,9 @@ export default function LeadsEventTable({ events }: LeadsEventTableProps) {
                 </div>
               </td>
               <td className="px-3 py-2.5 text-right font-semibold text-gray-900">{event.leads.toLocaleString()}</td>
-              <td className="px-3 py-2.5 text-right text-gray-500">{event.target.toLocaleString()}</td>
-              <td className={`px-3 py-2.5 text-right font-semibold ${event.variance >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                {event.variance >= 0 ? "+" : ""}{event.variance}%
+              <td className="px-3 py-2.5 text-right text-gray-500">{event.target > 0 ? event.target.toLocaleString() : "—"}</td>
+              <td className={`px-3 py-2.5 text-right font-semibold ${event.target === 0 ? "text-gray-300" : event.variance >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                {event.target === 0 ? "—" : `${event.variance >= 0 ? "+" : ""}${event.variance}%`}
               </td>
               <td className="px-3 py-2.5 text-right text-gray-600">{event.conversionRate}%</td>
             </tr>

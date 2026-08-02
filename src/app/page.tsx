@@ -15,7 +15,7 @@ import {
   leadsByChannel,
   leadsEvents,
   funnelData,
-} from "@/lib/dummy-data";
+} from "@/lib/live-data";
 
 export default function MasterDashboard() {
   const [comparison, setComparison] = useState("pop");
@@ -87,9 +87,9 @@ export default function MasterDashboard() {
           <div className="col-span-12 lg:col-span-7">
             <div className="bg-gray-50 rounded-lg p-4 h-full">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                Leads by Channel (A/T/V)
+                Sessions by Channel
               </h4>
-              <p className="text-[10px] text-gray-400 mb-3">Meta / Google / Email / Organic / Direct</p>
+              <p className="text-[10px] text-gray-400 mb-3">Direct / Google / Meta / Organic / Other / Email</p>
               <div className="h-[180px]">
                 <LeadsChannelChart data={leadsByChannel} />
               </div>
@@ -143,8 +143,8 @@ export default function MasterDashboard() {
         <p className="text-xs text-gray-500">
           Prepared by Tell No Lies {new Date().getFullYear()}
         </p>
-        <p className="text-[10px] text-gray-600 mt-1 bg-amber-50 border border-amber-200 inline-block rounded px-3 py-1">
-          All data shown is placeholder — awaiting live data connections (Supabase ready)
+        <p className="text-[10px] text-gray-600 mt-1 bg-emerald-50 border border-emerald-200 inline-block rounded px-3 py-1">
+          GA4 live data · 29 Jun – 28 Jul 2026 · ROAS/CPL awaiting ad spend · Membership events pending
         </p>
       </div>
     </div>

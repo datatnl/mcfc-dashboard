@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import type { FunnelStep } from "@/lib/dummy-data";
+import type { FunnelStep } from "@/lib/live-data";
 
 interface FunnelChartProps {
   steps: FunnelStep[];

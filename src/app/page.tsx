@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DateRangePicker from "@/components/DateRangePicker";
 import SectionHeader from "@/components/SectionHeader";
 import KpiCard from "@/components/KpiCard";
@@ -8,20 +8,137 @@ import TrendChart from "@/components/TrendChart";
 import LeadsChannelChart from "@/components/LeadsChannelChart";
 import LeadsEventTable from "@/components/LeadsEventTable";
 import FunnelChart from "@/components/FunnelChart";
-import {
-  behaviourKpis,
-  leadsKpis,
-  dailyTrend,
-  leadsByChannel,
-  leadsEvents,
-  funnelData,
-} from "@/lib/live-data";
+import { fetchDashboardData, pctChange } from "@/lib/queries";
+import type { KpiMetric, DailyPoint, FunnelStep, LeadEvent } from "@/lib/live-data";
+
+const CHANNEL_COLORS: Record<string, string> = {
+  "Direct": "#F472B6",
+  "Organic Search": "#3DD9A4",
+  "Paid Social": "#4F9CF7",
+  "Organic Social": "#A78BFA",
+  "Referral": "#FB923C",
+  "Cross-network": "#2dd4a8",
+  "Unassigned": "#94A3B8",
+  "Paid Search": "#818CF8",
+  "AI Assistant": "#22D3EE",
+  "Email": "#FF8C42",
+  "Organic Shopping": "#86EFAC",
+  "Paid Other": "#FDA4AF",
+  "Paid Video": "#FCD34D",
+  "Display": "#D8B4FE",
+  "Paid Shopping": "#FDBA74",
+};
+
+const STREAM_MAP: Record<string, keyof LeadEvent["revenueStreams"]> = {
+  CFS: "cfs",
+  Membership: "membership",
+  "Main Site": "ticketing",
+  Merchandise: "merchandise",
+  all: "cfs",
+};
+
+function fmt(n: number, prefix = ""): string {
+  if (prefix === "$") return `$${Math.round(n).toLocaleString()}`;
+  return n.toLocaleString();
+}
 
 export default function MasterDashboard() {
   const [comparison, setComparison] = useState("pop");
   const [startDate, setStartDate] = useState("2026-06-29");
   const [endDate, setEndDate] = useState("2026-07-28");
   const [funnelFilter, setFunnelFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+
+  const [behaviourKpis, setBehaviourKpis] = useState<KpiMetric[]>([]);
+  const [leadsKpis, setLeadsKpis] = useState<KpiMetric[]>([]);
+  const [dailyTrend, setDailyTrend] = useState<DailyPoint[]>([]);
+  const [channelData, setChannelData] = useState<{ channel: string; leads: number; color: string }[]>([]);
+  const [leadsEvents, setLeadsEvents] = useState<LeadEvent[]>([]);
+  const [funnelData, setFunnelData] = useState<FunnelStep[]>([]);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const d = await fetchDashboardData(startDate, endDate);
+
+      const sessionsSpark = d.dailySessions.map((r) => r.sessions);
+      const newSpark = d.dailySessions.map((r) => r.new_sessions);
+      const retSpark = d.dailySessions.map((r) => r.returning_sessions);
+      const convSpark = d.dailySessions.map((r) => d.dailyConversions[r.date] ?? 0);
+      const revSpark = d.dailySessions.map((r) => Math.round(d.dailyRevenue[r.date] ?? 0));
+      const leadsSpark = d.dailySessions.map((r) => d.dailyLeads[r.date] ?? 0);
+
+      setBehaviourKpis([
+        { label: "Total Web Sessions", value: fmt(d.sessions), change: pctChange(d.sessions, d.prevSessions), sparkline: sessionsSpark },
+        { label: "First Visits", value: fmt(d.newSessions), change: pctChange(d.newSessions, d.prevNewSessions), sparkline: newSpark },
+        { label: "Repeat Visits", value: fmt(d.returningSessions), change: pctChange(d.returningSessions, d.prevReturningSessions), sparkline: retSpark },
+        { label: "Total Conversions", value: fmt(d.conversions), change: pctChange(d.conversions, d.prevConversions), sparkline: convSpark },
+        { label: "Revenue", value: fmt(d.revenue, "$"), change: pctChange(d.revenue, d.prevRevenue), sparkline: revSpark },
+        { label: "ROAS", value: "—", change: 0, sparkline: [], unavailable: true },
+      ]);
+
+      setLeadsKpis([
+        { label: "Total Email Subscriptions", value: "—", change: 0, sparkline: [], unavailable: true },
+        { label: "Total Leads", value: fmt(d.leads), change: pctChange(d.leads, d.prevLeads), sparkline: leadsSpark },
+        { label: "Cost Per Lead (CPL)", value: "—", change: 0, sparkline: [], unavailable: true },
+      ]);
+
+      const trend: DailyPoint[] = d.dailySessions.map((r) => {
+        const dt = new Date(r.date);
+        const label = dt.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+        return {
+          date: label,
+          sessions: r.sessions,
+          leads: d.dailyLeads[r.date] ?? 0,
+          conversions: d.dailyConversions[r.date] ?? 0,
+        };
+      });
+      setDailyTrend(trend);
+
+      setChannelData(
+        d.channelSessions.map((c) => ({
+          channel: c.channel,
+          leads: c.sessions,
+          color: CHANNEL_COLORS[c.channel] ?? "#94A3B8",
+        }))
+      );
+
+      setLeadsEvents(
+        d.leadEvents.map((e) => {
+          const streamKey = STREAM_MAP[e.revenue_stream];
+          const streams = { cfs: false, membership: false, ticketing: false, merchandise: false };
+          if (e.revenue_stream === "all") {
+            streams.cfs = true; streams.membership = true; streams.ticketing = true; streams.merchandise = true;
+          } else if (streamKey) {
+            streams[streamKey] = true;
+          }
+          return {
+            event: e.dashboard_label,
+            revenueStreams: streams,
+            leads: e.event_count,
+            target: 0,
+            variance: 0,
+            conversionRate: d.sessions > 0 ? Math.round((e.event_count / d.sessions) * 10000) / 100 : 0,
+          };
+        })
+      );
+
+      const totalLeads = d.leads;
+      setFunnelData([
+        { label: "Total Sessions", value: d.sessions, abandonments: d.sessions - totalLeads },
+        { label: "Leads", value: totalLeads, abandonments: totalLeads - d.conversions },
+        { label: "Conversions", value: d.conversions },
+      ]);
+    } catch (err) {
+      console.error("Failed to load dashboard data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   return (
     <div className="p-6 pb-12">
@@ -48,6 +165,13 @@ export default function MasterDashboard() {
         />
       </div>
 
+      {(loading || behaviourKpis.length === 0) && (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-pulse text-sm text-gray-400">Loading dashboard data...</div>
+        </div>
+      )}
+
+      {!loading && behaviourKpis.length > 0 && <>
       {/* BEHAVIOUR Section */}
       <section className="bg-white rounded-xl p-6 mb-6">
         <SectionHeader
@@ -90,7 +214,7 @@ export default function MasterDashboard() {
               </h4>
               <p className="text-[10px] text-gray-400 mb-2">Session default channel group</p>
               <div className="h-[420px]">
-                <LeadsChannelChart data={leadsByChannel} />
+                <LeadsChannelChart data={channelData} />
               </div>
             </div>
           </div>
@@ -136,6 +260,8 @@ export default function MasterDashboard() {
         <FunnelChart steps={funnelData} />
       </section>
 
+      </>}
+
       {/* Footer */}
       <div className="text-center py-4">
         <div className="inline-flex items-center gap-2 mb-2">
@@ -145,7 +271,7 @@ export default function MasterDashboard() {
           Prepared by Tell No Lies {new Date().getFullYear()}
         </p>
         <p className="text-[10px] text-gray-600 mt-1 bg-emerald-50 border border-emerald-200 inline-block rounded px-3 py-1">
-          GA4 live data · 29 Jun – 28 Jul 2026 · ROAS/CPL awaiting ad spend · Membership events pending
+          GA4 live data · ROAS/CPL awaiting ad spend · Membership events pending
         </p>
       </div>
     </div>

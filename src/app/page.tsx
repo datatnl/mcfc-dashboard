@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import DateRangePicker from "@/components/DateRangePicker";
 import SectionHeader from "@/components/SectionHeader";
 import KpiCard from "@/components/KpiCard";
@@ -37,6 +37,13 @@ const STREAM_MAP: Record<string, keyof LeadEvent["revenueStreams"]> = {
   all: "cfs",
 };
 
+const FILTER_TO_STREAMS: Record<string, string[]> = {
+  cfs: ["CFS"],
+  membership: ["Membership"],
+  ticketing: ["Main Site"],
+  merchandise: ["Merchandise"],
+};
+
 function fmt(n: number, prefix = ""): string {
   if (prefix === "$") return `$${Math.round(n).toLocaleString()}`;
   return n.toLocaleString();
@@ -54,7 +61,9 @@ export default function MasterDashboard() {
   const [dailyTrend, setDailyTrend] = useState<DailyPoint[]>([]);
   const [channelData, setChannelData] = useState<{ channel: string; leads: number; color: string }[]>([]);
   const [leadsEvents, setLeadsEvents] = useState<LeadEvent[]>([]);
-  const [funnelData, setFunnelData] = useState<FunnelStep[]>([]);
+  const [rawLeadEvents, setRawLeadEvents] = useState<{ revenue_stream: string; event_count: number }[]>([]);
+  const [rawConvEvents, setRawConvEvents] = useState<{ revenue_stream: string; event_count: number }[]>([]);
+  const [totalSessions, setTotalSessions] = useState(0);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -123,12 +132,9 @@ export default function MasterDashboard() {
         })
       );
 
-      const totalLeads = d.leads;
-      setFunnelData([
-        { label: "Total Sessions", value: d.sessions, abandonments: d.sessions - totalLeads },
-        { label: "Leads", value: totalLeads, abandonments: totalLeads - d.conversions },
-        { label: "Conversions", value: d.conversions },
-      ]);
+      setRawLeadEvents(d.leadEvents);
+      setRawConvEvents(d.conversionEvents);
+      setTotalSessions(d.sessions);
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
     } finally {
@@ -139,6 +145,27 @@ export default function MasterDashboard() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const matchesFilter = (stream: string) => {
+    if (funnelFilter === "all") return true;
+    const allowed = FILTER_TO_STREAMS[funnelFilter] ?? [];
+    return allowed.includes(stream) || stream === "all";
+  };
+
+  const funnelData: FunnelStep[] = useMemo(() => {
+    const filteredLeads = rawLeadEvents
+      .filter((e) => matchesFilter(e.revenue_stream))
+      .reduce((s, e) => s + e.event_count, 0);
+    const filteredConversions = rawConvEvents
+      .filter((e) => matchesFilter(e.revenue_stream))
+      .reduce((s, e) => s + e.event_count, 0);
+    return [
+      { label: "Total Sessions", value: totalSessions, abandonments: totalSessions - filteredLeads },
+      { label: "Leads", value: filteredLeads, abandonments: filteredLeads - filteredConversions },
+      { label: "Conversions", value: filteredConversions },
+    ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [funnelFilter, rawLeadEvents, rawConvEvents, totalSessions]);
 
   return (
     <div className="p-6 pb-12">

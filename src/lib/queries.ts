@@ -41,6 +41,10 @@ export interface DashboardData {
     revenue_stream: string;
     event_count: number;
   }[];
+  conversionEvents: {
+    revenue_stream: string;
+    event_count: number;
+  }[];
 }
 
 function pctChange(current: number, previous: number): number {
@@ -211,6 +215,18 @@ export async function fetchDashboardData(
   }
   const leadEvents = Object.values(leadMap).sort((a, b) => b.event_count - a.event_count);
 
+  // Conversion events aggregated by revenue stream
+  const convMap: Record<string, { revenue_stream: string; event_count: number }> = {};
+  for (const e of events) {
+    if (e.classification !== "conversion") continue;
+    const key = e.revenue_stream;
+    if (!convMap[key]) {
+      convMap[key] = { revenue_stream: e.revenue_stream, event_count: 0 };
+    }
+    convMap[key].event_count += e.event_count;
+  }
+  const conversionEvents = Object.values(convMap);
+
   return {
     sessions, newSessions, returningSessions,
     conversions, leads, revenue, purchases,
@@ -218,7 +234,7 @@ export async function fetchDashboardData(
     prevConversions, prevLeads, prevRevenue, prevPurchases,
     dailySessions: daily,
     dailyLeads, dailyConversions, dailyRevenue, dailyPurchases,
-    channelSessions, leadEvents,
+    channelSessions, leadEvents, conversionEvents,
   };
 }
 

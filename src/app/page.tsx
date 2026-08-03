@@ -9,6 +9,7 @@ import LeadsChannelChart from "@/components/LeadsChannelChart";
 import LeadsEventTable from "@/components/LeadsEventTable";
 import FunnelChart from "@/components/FunnelChart";
 import EcommerceFunnel from "@/components/EcommerceFunnel";
+import StreamBreakdown from "@/components/StreamBreakdown";
 import { fetchDashboardData, fetchStreamSessions, pctChange } from "@/lib/queries";
 import type { KpiMetric, DailyPoint, FunnelStep, LeadEvent } from "@/lib/live-data";
 
@@ -278,6 +279,10 @@ export default function MasterDashboard() {
             Sessions, Leads &amp; Conversions — daily trend
           </h3>
           <TrendChart data={dailyTrend} />
+        </div>
+
+        <div className="mt-6 pt-5 border-t border-gray-100">
+          <StreamBreakdown startDate={startDate} endDate={endDate} />
         </div>
       </section>
 

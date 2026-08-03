@@ -99,9 +99,9 @@ function CalendarMonth({
               onClick={() => onSelect(iso)}
               className={`text-[11px] py-1 rounded transition-colors ${
                 isStart || isEnd
-                  ? "bg-[#2dd4a8] text-white font-bold"
+                  ? "bg-[#3bd6ff] text-white font-bold"
                   : inRange
-                    ? "bg-[#2dd4a8]/15 text-gray-700"
+                    ? "bg-[#3bd6ff]/15 text-gray-700"
                     : "text-gray-600 hover:bg-gray-100"
               }`}
             >
@@ -238,7 +238,7 @@ export default function DateRangePicker({
                   onClick={() => handlePreset(p)}
                   className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
                     activePreset === p.label
-                      ? "bg-[#2dd4a8]/10 text-[#2dd4a8] font-semibold"
+                      ? "bg-[#3bd6ff]/10 text-[#3bd6ff] font-semibold"
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
@@ -259,7 +259,7 @@ export default function DateRangePicker({
                     onChange={(e) => { setDraftStart(e.target.value); setActivePreset(null); }}
                     onFocus={() => setSelecting("start")}
                     className={`w-full border rounded-md px-2.5 py-1.5 text-sm ${
-                      selecting === "start" ? "border-[#2dd4a8] ring-1 ring-[#2dd4a8]/30" : "border-gray-200"
+                      selecting === "start" ? "border-[#3bd6ff] ring-1 ring-[#3bd6ff]/30" : "border-gray-200"
                     }`}
                   />
                 </div>
@@ -273,7 +273,7 @@ export default function DateRangePicker({
                     onChange={(e) => { setDraftEnd(e.target.value); setActivePreset(null); }}
                     onFocus={() => setSelecting("end")}
                     className={`w-full border rounded-md px-2.5 py-1.5 text-sm ${
-                      selecting === "end" ? "border-[#2dd4a8] ring-1 ring-[#2dd4a8]/30" : "border-gray-200"
+                      selecting === "end" ? "border-[#3bd6ff] ring-1 ring-[#3bd6ff]/30" : "border-gray-200"
                     }`}
                   />
                 </div>
@@ -327,7 +327,7 @@ export default function DateRangePicker({
                 </button>
                 <button
                   onClick={handleApply}
-                  className="px-4 py-1.5 text-xs font-medium text-white bg-[#2dd4a8] rounded-md hover:bg-[#25b890] transition-colors"
+                  className="px-4 py-1.5 text-xs font-medium text-white bg-[#3bd6ff] rounded-md hover:bg-[#1cb8e0] transition-colors"
                 >
                   Apply
                 </button>

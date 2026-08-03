@@ -134,7 +134,7 @@ export const leadsByChannel = [
   { channel: "Paid Social", leads: 27185, color: "#4F9CF7" },
   { channel: "Organic Social", leads: 5230, color: "#A78BFA" },
   { channel: "Referral", leads: 3667, color: "#FB923C" },
-  { channel: "Cross-network", leads: 2523, color: "#2dd4a8" },
+  { channel: "Cross-network", leads: 2523, color: "#3bd6ff" },
   { channel: "Unassigned", leads: 1940, color: "#94A3B8" },
   { channel: "Paid Search", leads: 1366, color: "#818CF8" },
   { channel: "AI Assistant", leads: 271, color: "#22D3EE" },

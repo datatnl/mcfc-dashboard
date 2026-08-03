@@ -26,7 +26,7 @@ export default function Sidebar() {
           >
             <span
               className={`w-3 h-3 rounded-sm flex-shrink-0 ${
-                item.active ? "bg-[#2dd4a8]" : "bg-gray-600"
+                item.active ? "bg-[#3bd6ff]" : "bg-gray-600"
               }`}
             />
             {item.label}

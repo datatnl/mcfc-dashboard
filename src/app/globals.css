@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-sidebar: #1a2a2e;
-  --color-sidebar-active: #2dd4a8;
-  --color-page-bg: #1e3338;
+  --color-sidebar: #18191a;
+  --color-sidebar-active: #3bd6ff;
+  --color-page-bg: #1c1d1f;
   --color-card-bg: #ffffff;
   --color-card-border: #e5e7eb;
   --color-text-primary: #1f2937;
   --color-text-secondary: #6b7280;
   --color-text-muted: #9ca3af;
-  --color-accent: #2dd4a8;
+  --color-accent: #3bd6ff;
   --color-positive: #10b981;
   --color-negative: #ef4444;
-  --color-section-bar: #2dd4a8;
+  --color-section-bar: #3bd6ff;
   --color-table-header: #f3f4f6;
   --color-table-border: #e5e7eb;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;

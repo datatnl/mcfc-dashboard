@@ -8,6 +8,7 @@ import TrendChart from "@/components/TrendChart";
 import LeadsChannelChart from "@/components/LeadsChannelChart";
 import LeadsEventTable from "@/components/LeadsEventTable";
 import FunnelChart from "@/components/FunnelChart";
+import EcommerceFunnel from "@/components/EcommerceFunnel";
 import { fetchDashboardData, fetchStreamSessions, pctChange } from "@/lib/queries";
 import type { KpiMetric, DailyPoint, FunnelStep, LeadEvent } from "@/lib/live-data";
 
@@ -17,7 +18,7 @@ const CHANNEL_COLORS: Record<string, string> = {
   "Paid Social": "#4F9CF7",
   "Organic Social": "#A78BFA",
   "Referral": "#FB923C",
-  "Cross-network": "#2dd4a8",
+  "Cross-network": "#3bd6ff",
   "Unassigned": "#94A3B8",
   "Paid Search": "#818CF8",
   "AI Assistant": "#22D3EE",
@@ -64,6 +65,8 @@ export default function MasterDashboard() {
   const [rawLeadEvents, setRawLeadEvents] = useState<{ revenue_stream: string; event_count: number }[]>([]);
   const [rawConvEvents, setRawConvEvents] = useState<{ revenue_stream: string; event_count: number }[]>([]);
   const [totalSessions, setTotalSessions] = useState(0);
+  const [ecommFunnel, setEcommFunnel] = useState<{ label: string; value: number }[]>([]);
+  const [ecommInsights, setEcommInsights] = useState<string[]>([]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -135,6 +138,45 @@ export default function MasterDashboard() {
       setRawLeadEvents(d.leadEvents);
       setRawConvEvents(d.conversionEvents);
       setTotalSessions(d.sessions);
+
+      // Ecommerce conversion funnel — fetch shoppable stream sessions
+      const [merchTotals, cfsTotals] = await Promise.all([
+        fetchStreamSessions(startDate, endDate, comparison, "merchandise"),
+        fetchStreamSessions(startDate, endDate, comparison, "cfs"),
+      ]);
+      const ecommSessions = (merchTotals?.sessions ?? 0) + (cfsTotals?.sessions ?? 0);
+
+      const eventsByLabel: Record<string, number> = {};
+      for (const e of d.leadEvents) {
+        eventsByLabel[e.dashboard_label] = (eventsByLabel[e.dashboard_label] ?? 0) + e.event_count;
+      }
+      const addToCart = (eventsByLabel["Add to Cart"] ?? 0);
+      const beginCheckout = (eventsByLabel["Begin Checkout"] ?? 0) + (eventsByLabel["Checkout Started"] ?? 0);
+      const stages = [
+        { label: "All Sessions", value: d.sessions },
+        { label: "Ecommerce Sessions", value: ecommSessions },
+        { label: "Add to Cart", value: addToCart },
+        { label: "Begin Checkout", value: beginCheckout },
+        { label: "Purchase", value: d.purchases },
+      ];
+      setEcommFunnel(stages);
+
+      const ecommPct = d.sessions > 0 ? (ecommSessions / d.sessions) * 100 : 0;
+      const cartRate = ecommSessions > 0 ? (addToCart / ecommSessions) * 100 : 0;
+      const checkoutRate = addToCart > 0 ? (beginCheckout / addToCart) * 100 : 0;
+      const purchaseFromCheckout = beginCheckout > 0 ? (d.purchases / beginCheckout) * 100 : 0;
+      const overallCvr = ecommSessions > 0 ? (d.purchases / ecommSessions) * 100 : 0;
+      const cartToPurchase = addToCart > 0 ? (d.purchases / addToCart) * 100 : 0;
+      const aov = d.purchases > 0 ? Math.round(d.revenue / d.purchases) : 0;
+      const nonEcommPct = 100 - ecommPct;
+
+      const newInsights = [
+        `Only ${ecommPct.toFixed(1)}% of total sessions (${ecommSessions.toLocaleString()} of ${d.sessions.toLocaleString()}) land on ecommerce-enabled sites (Merchandise + CFS). The remaining ${nonEcommPct.toFixed(1)}% are on the main site, membership portal, and other non-shoppable properties.`,
+        `Of the ${ecommSessions.toLocaleString()} ecommerce sessions, ${cartRate.toFixed(1)}% add a product to cart. This is the true Add to Cart rate when measured against the relevant audience — significantly higher than the ${(addToCart / d.sessions * 100).toFixed(1)}% rate against all sessions.`,
+        `Once a user starts checkout, ${purchaseFromCheckout.toFixed(1)}% complete a purchase — the checkout flow converts relatively well. The major friction point is upstream: getting users from browsing to adding a product to their cart.`,
+        `Overall ecommerce conversion rate is ${overallCvr.toFixed(1)}% from shoppable sessions. ${d.purchases} purchases generated $${Math.round(d.revenue).toLocaleString()} in revenue ($${aov.toLocaleString()} AOV). Cart-to-purchase rate sits at ${cartToPurchase.toFixed(1)}% — roughly 1 in ${Math.round(1 / (cartToPurchase / 100))} cart users complete checkout.`,
+      ];
+      setEcommInsights(newInsights);
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
     } finally {
@@ -189,9 +231,11 @@ export default function MasterDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-[#2dd4a8] flex items-center justify-center text-white font-bold text-lg">
-            MCFC
-          </div>
+          <img
+            src="https://tpc.googlesyndication.com/simgad/13226404176824214365"
+            alt="Melbourne City FC"
+            className="w-14 h-14 object-contain"
+          />
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">MASTER DASHBOARD</h1>
             <p className="text-sm text-gray-400">
@@ -304,17 +348,30 @@ export default function MasterDashboard() {
         <FunnelChart steps={funnelData} loading={funnelLoading} />
       </section>
 
+      {/* ECOMMERCE FUNNEL Section */}
+      <section className="bg-white rounded-xl p-6 mb-6">
+        <SectionHeader
+          title="CONVERSION FUNNEL"
+          subtitle="Ecommerce user journey — where users drop off between sessions and purchase"
+        />
+        <EcommerceFunnel stages={ecommFunnel} insights={ecommInsights} />
+      </section>
+
       </>}
 
       {/* Footer */}
       <div className="text-center py-4">
-        <div className="inline-flex items-center gap-2 mb-2">
-          <div className="w-6 h-6 rounded bg-[#2dd4a8]" />
+        <div className="inline-flex items-center gap-2 mb-3">
+          <img
+            src="https://tellnolies.com.au/wp-content/uploads/logo-tnl.png"
+            alt="Tell No Lies"
+            className="h-6 object-contain"
+          />
         </div>
         <p className="text-xs text-gray-500">
           Prepared by Tell No Lies {new Date().getFullYear()}
         </p>
-        <p className="text-[10px] text-gray-600 mt-1 bg-emerald-50 border border-emerald-200 inline-block rounded px-3 py-1">
+        <p className="text-[10px] text-gray-600 mt-1 bg-sky-50 border border-sky-200 inline-block rounded px-3 py-1">
           GA4 live data · ROAS/CPL awaiting ad spend · Membership events pending
         </p>
       </div>

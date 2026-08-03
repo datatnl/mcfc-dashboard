@@ -9,7 +9,7 @@ function StreamBadge({ active, label }: { active: boolean; label: string }) {
     <span
       className={`inline-flex items-center justify-center w-6 h-5 rounded text-[9px] font-bold ${
         active
-          ? "bg-[#2dd4a8] text-white"
+          ? "bg-[#3bd6ff] text-white"
           : "bg-gray-100 text-gray-400"
       }`}
     >

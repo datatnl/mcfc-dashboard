@@ -124,7 +124,7 @@ export default function FunnelChart({ steps, loading }: FunnelChartProps) {
           <span className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold ml-2">Total Sessions</span>
         </div>
         <div>
-          <span className="text-2xl font-bold text-[#2dd4a8]">{overallRate}%</span>
+          <span className="text-2xl font-bold text-[#3bd6ff]">{overallRate}%</span>
           <span className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold ml-2">Conversion Rate</span>
         </div>
       </div>
@@ -178,13 +178,13 @@ export default function FunnelChart({ steps, loading }: FunnelChartProps) {
               {/* Circle icon */}
               <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
                 isLast
-                  ? "bg-[#2dd4a8]/15"
+                  ? "bg-[#3bd6ff]/15"
                   : isHighDropoff
                     ? "bg-red-50 border-2 border-red-200"
                     : "bg-gray-100"
               }`}>
                 {isLast ? (
-                  <svg className="w-5 h-5 text-[#2dd4a8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <svg className="w-5 h-5 text-[#3bd6ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 ) : (
@@ -196,8 +196,8 @@ export default function FunnelChart({ steps, loading }: FunnelChartProps) {
 
               {isLast ? (
                 <>
-                  <span className="text-xl font-bold text-[#2dd4a8]">{overallRate}%</span>
-                  <span className="text-[11px] font-bold text-[#2dd4a8] uppercase tracking-wider">Conversion</span>
+                  <span className="text-xl font-bold text-[#3bd6ff]">{overallRate}%</span>
+                  <span className="text-[11px] font-bold text-[#3bd6ff] uppercase tracking-wider">Conversion</span>
                 </>
               ) : (
                 <>
